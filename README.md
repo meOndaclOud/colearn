@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # CoLearn
 
 A learning platform for a teacher with students who each follow their own plan.
@@ -51,3 +52,8 @@ Set `DEMO_PASSWORD` to choose the password, `DEMO_TIMEZONE` to change the timezo
 - The shadcn-style components in `src/components/ui` are written in this repository (Radix + Tailwind).
 
 See `docs/ARCHITECTURE.md` for the design and database.
+=======
+# colearn
+An Educational All In One Platform for students and teachers
+>>>>>>> 7f2524db9808b44f0758b448de470dd07830ecbc
+
