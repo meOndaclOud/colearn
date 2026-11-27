@@ -1,11 +1,10 @@
-<<<<<<< HEAD
 # CoLearn
 
 A learning platform for a teacher with students who each follow their own plan.
 Next.js (App Router, TypeScript, Tailwind) and Supabase (Postgres, Auth, Storage).
 
 ## Set up (about 15 minutes)
-Needs Node 20.11 or newer and a free [Supabase](https://supabase.com) account.
+Needs Node 20.11 or newer and a free [Supabase] account.
 
 1. **Create a Supabase project.**
 2. **Create the database.** In the SQL Editor run each file in `supabase/migrations/` once, in order (0001 to 0005).
