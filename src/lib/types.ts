@@ -1,0 +1,14 @@
+export type Role = "teacher" | "class";
+export type Profile = { id: string; role: Role; teacher_id: string; full_name: string; username: string | null; timezone: string; is_demo: boolean };
+export type Student = { id: string; teacher_id: string; full_name: string; username: string; avatar_color: string; avatar_path: string | null; age: number | null; grade: string | null; interests: string[]; is_active: boolean; created_at: string };
+export type Subject = { id: string; name: string; color: string };
+export type Resource = { id?: string; label: string; action: string; url: string | null; file_path: string | null; position?: number };
+export type Activity = { id?: string; position?: number; title: string; description: string; instructions: string; estimated_minutes: number; expected_result: string; requires_submission: boolean; requires_review: boolean; resources: Resource[] };
+export type Lesson = { id: string; subject_id: string | null; title: string; objectives: string; introduction: string; instructions: string; materials: string; duration_minutes: number; expected_outcome: string; completion_criteria: string; is_template: boolean; updated_at: string };
+export type Progress = { assignment_id: string; teacher_id: string; student_id: string; lesson_id: string; scheduled_date: string; publish_status: "draft" | "published"; title: string; subject_id: string | null; duration_minutes: number; total: number; completed: number; in_progress: number; last_activity: string | null };
+export type Challenge = { id: string; title: string; category: string; difficulty: string; description: string; objective: string; instructions: string; required_resources: string; expected_outcome: string; submission_requirements: string; created_at: string };
+export type ChallengeAssignment = { id: string; challenge_id: string; student_id: string; deadline: string | null; status: string; completed_at: string | null; created_at: string };
+export type Submission = { id: string; student_id: string; title: string; activity_id: string | null; assignment_id: string | null; challenge_assignment_id: string | null; project_id: string | null; link_url: string | null; file_path: string | null; file_name: string | null; comment: string; status: string; created_at: string };
+export type Feedback = { id: string; student_id: string; kind: "feedback" | "observation" | "achievement"; body: string; assignment_id: string | null; activity_id: string | null; submission_id: string | null; created_at: string };
+export type LibraryItem = { id: string; title: string; kind: string; url: string | null; file_path: string | null; category: string; tags: string[]; description: string };
+export type ActionResult = { error?: string; id?: string };
