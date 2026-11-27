@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookCheck, FolderCheck, History, Trophy } from "lucide-react";
+import { BookCheck, FolderCheck, History, Trophy, PlayCircle } from "lucide-react";
 import { requireStudent } from "@/lib/auth";
 import { must } from "@/lib/data";
 import { byDay, totals, weekStart } from "@/lib/stats";
@@ -32,8 +32,9 @@ export default async function MyProgress() {
   return (
     <>
       <PageHeader title="My progress" />
-      <div className="grid gap-3 sm:grid-cols-3">
-        <Stat label="Lessons completed" value={rows.filter((r) => r.total && r.completed === r.total).length} icon={BookCheck} tone="bg-teal-soft text-teal" />
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <Stat label="Lessons completed" value={rows.filter((r) => r.lesson_status === "completed").length} icon={BookCheck} tone="bg-teal-soft text-teal" />
+        <Stat label="Lessons started" value={rows.filter((r) => r.started_at).length} icon={PlayCircle} />
         <Stat label="Challenges completed" value={challenges.filter((c) => c.status === "completed").length} icon={Trophy} />
         <Stat label="Work submitted" value={must<unknown[]>(sub).length} icon={FolderCheck} />
       </div>

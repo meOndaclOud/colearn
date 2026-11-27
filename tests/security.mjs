@@ -78,6 +78,7 @@ await test("cannot touch a draft or future lesson through the student function",
   for (const x of [draft, future]) {
     const act = ok(await t.from("activities").select("id").eq("lesson_id", x.lesson_id).limit(1))[0];
     denied(await k.rpc("student_set_activity", { p_student: x.student_id, p_assignment: x.id, p_activity: act.id, p_status: "completed" }));
+    denied(await k.rpc("student_start_lesson", { p_assignment: x.id, p_student: x.student_id }));
   }
 });
 
@@ -87,14 +88,81 @@ const share = ok(await t.from("activities").select("*").eq("lesson_id", story.id
 const mine = all.find((x) => x.lesson_id === story.id && x.status === "published" && x.scheduled_date === today);
 const args = { p_student: mine.student_id, p_assignment: mine.id, p_activity: share.id };
 const send = { p_student: mine.student_id, p_type: "activity", p_target: share.id, p_assignment: mine.id, p_link: "https://scratch.mit.edu/", p_file_path: null, p_file_name: null, p_comment: "" };
+await test("opening a lesson persists its started state for student and teacher progress views", async () => {
+  ok(await k.rpc("student_start_lesson", { p_assignment: mine.id, p_student: mine.student_id }));
+  const view = ok(await k.from("assignment_progress").select("lesson_status, started_at").eq("assignment_id", mine.id).single());
+  assert.ok(view.started_at);
+  assert.ok(["in_progress", "completed"].includes(view.lesson_status));
+  assert.equal(ok(await k.from("lesson_assignments").select("status").eq("id", mine.id).single()).status, "published");
+  const teacherView = ok(await t.from("assignment_progress").select("lesson_status, started_at").eq("assignment_id", mine.id).single());
+  assert.deepEqual(teacherView, view);
+});
 await test("work must be submitted before completion", async () => denied(await k.rpc("student_set_activity", { ...args, p_status: "completed" })));
+await test("lesson completion respects submission requirements atomically", async () => {
+  const before = ok(await k.from("progress_records").select("activity_id, status").eq("assignment_id", mine.id));
+  denied(await k.rpc("student_complete_lesson", { p_assignment: mine.id, p_student: mine.student_id }));
+  const after = ok(await k.from("progress_records").select("activity_id, status").eq("assignment_id", mine.id));
+  assert.deepEqual(after, before);
+});
 await test("duplicate submissions are blocked", async () => { ok(await k.rpc("student_submit", send)); denied(await k.rpc("student_submit", send)); });
 await test("reviewed activity waits for the teacher", async () => assert.equal(ok(await k.rpc("student_set_activity", { ...args, p_status: "completed" })), "awaiting_review"));
 await test("approval completes it, and the student cannot undo that", async () => {
   const s = ok(await t.from("submissions").select("id").eq("activity_id", share.id).eq("status", "submitted").single());
   ok(await t.rpc("review_submission", { p_id: s.id, p_status: "approved", p_feedback: "Great" }));
-  assert.equal(ok(await t.from("progress_records").select("status").eq("assignment_id", mine.id).eq("activity_id", share.id).single()).status, "completed");
+  const activity = ok(await t.from("progress_records").select("status, completed_at").eq("assignment_id", mine.id).eq("activity_id", share.id).single());
+  assert.equal(activity.status, "completed");
+  assert.ok(activity.completed_at);
+  const studentView = ok(await k.from("assignment_progress").select("completed, total, lesson_status").eq("assignment_id", mine.id).single());
+  const teacherView = ok(await t.from("assignment_progress").select("completed, total, lesson_status").eq("assignment_id", mine.id).single());
+  assert.deepEqual(studentView, teacherView);
+  assert.ok(studentView.completed >= 1 && studentView.total >= studentView.completed);
+  assert.equal(studentView.lesson_status, studentView.completed === studentView.total ? "completed" : "in_progress");
   denied(await k.rpc("student_set_activity", { ...args, p_status: "not_started" }));
+});
+await test("completing the remaining lesson tasks updates both portals", async () => {
+  assert.equal(ok(await k.rpc("student_complete_lesson", { p_assignment: mine.id, p_student: mine.student_id })), "completed");
+  const studentView = ok(await k.from("assignment_progress").select("completed, total, lesson_status, completed_at").eq("assignment_id", mine.id).single());
+  const teacherView = ok(await t.from("assignment_progress").select("completed, total, lesson_status, completed_at").eq("assignment_id", mine.id).single());
+  assert.deepEqual(studentView, teacherView);
+  assert.equal(studentView.completed, studentView.total);
+  assert.equal(studentView.lesson_status, "completed");
+  assert.ok(studentView.completed_at);
+});
+await test("instruction-only lesson can be started and completed in both portals", async () => {
+  const title = `Instruction-only progress test ${crypto.randomUUID()}`;
+  const lessonId = ok(await t.rpc("save_lesson", { p: {
+    title, subject_id: null, objectives: "", introduction: "", instructions: "Read the lesson instructions.",
+    materials: "", duration_minutes: 10, expected_outcome: "", completion_criteria: "", notes: "",
+    is_template: false, resources: [], activities: [],
+  } }));
+  let assignmentId;
+  try {
+    assignmentId = ok(await t.from("lesson_assignments").insert({ lesson_id: lessonId, student_id: a.id, scheduled_date: today, status: "published" }).select("id").single()).id;
+    ok(await k.rpc("student_start_lesson", { p_assignment: assignmentId, p_student: a.id }));
+    const started = ok(await k.from("assignment_progress").select("total, activity_total, completed, in_progress, lesson_status, started_at").eq("assignment_id", assignmentId).single());
+    assert.equal(started.total, 1);
+    assert.equal(started.activity_total, 0);
+    assert.equal(started.lesson_status, "in_progress");
+    assert.ok(started.started_at);
+    assert.equal(ok(await k.from("progress_records").select("id").eq("assignment_id", assignmentId)).length, 0);
+
+    assert.equal(ok(await k.rpc("student_complete_lesson", { p_assignment: assignmentId, p_student: a.id })), "completed");
+    const studentView = ok(await k.from("assignment_progress").select("total, activity_total, completed, in_progress, lesson_status, completed_at").eq("assignment_id", assignmentId).single());
+    const teacherView = ok(await t.from("assignment_progress").select("total, activity_total, completed, in_progress, lesson_status, completed_at").eq("assignment_id", assignmentId).single());
+    assert.deepEqual(studentView, teacherView);
+    assert.equal(studentView.total, 1);
+    assert.equal(studentView.activity_total, 0);
+    assert.equal(studentView.completed, 1);
+    assert.equal(studentView.lesson_status, "completed");
+    assert.ok(studentView.completed_at);
+    assert.equal(ok(await k.from("progress_records").select("id").eq("assignment_id", assignmentId)).length, 0);
+    const events = ok(await t.from("progress_history").select("status").eq("student_id", a.id).eq("title", title));
+    assert.deepEqual(events.map((x) => x.status).sort(), ["lesson_completed", "lesson_started"]);
+  } finally {
+    if (assignmentId) await t.from("lesson_assignments").delete().eq("id", assignmentId);
+    await t.from("progress_history").delete().eq("student_id", a.id).eq("title", title);
+    await t.from("lessons").delete().eq("id", lessonId);
+  }
 });
 await test("every change is kept in history", async () => assert.ok(ok(await t.from("progress_history").select("id").eq("student_id", mine.student_id)).length >= 3));
 

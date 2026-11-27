@@ -3,33 +3,39 @@ import * as React from "react";
 import { motion } from "framer-motion";
 import { Check, CheckCircle2, Paperclip, Send, X } from "lucide-react";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Textarea } from "@/components/ui/form";
 import { Modal } from "@/components/ui/dialog";
 import { UploadButton } from "@/components/editor/resource-editor";
 import { useAction } from "@/components/shared/action-button";
-import { setActivityStatus, startChallenge, submitWork } from "@/actions/student";
-import { cn } from "@/lib/utils";
+import { completeLesson, setActivityStatus, startChallenge, startLesson, submitWork } from "@/actions/student";
+import { cn, fmtDateTime } from "@/lib/utils";
 
-export function StatusControl({ assignmentId, activityId, status, requiresReview }: { assignmentId: string; activityId: string; status: string; requiresReview: boolean }) {
+export function StatusControl({ assignmentId, activityId, status, requiresReview, canComplete, completedAt, timezone }: { assignmentId: string; activityId: string; status: string; requiresReview: boolean; canComplete: boolean; completedAt: string | null; timezone: string }) {
   const { pending, run } = useAction();
+  const router = useRouter();
   if (requiresReview && status === "completed")
-    return <p className="flex items-center gap-2 text-sm font-medium text-teal"><motion.span initial={{ scale: 0 }} animate={{ scale: 1 }}><CheckCircle2 className="size-5" /></motion.span>Approved by your teacher</p>;
+    return <p className="flex items-center gap-2 text-sm font-medium text-teal"><motion.span initial={{ scale: 0 }} animate={{ scale: 1 }}><CheckCircle2 className="size-5" /></motion.span>Approved by your teacher{completedAt && <span className="font-normal text-muted">· {fmtDateTime(completedAt, timezone)}</span>}</p>;
   const set = (s: string) => run(setActivityStatus, { assignment_id: assignmentId, activity_id: activityId, status: s }, undefined, (r) =>
-    toast.success(r.id === "awaiting_review" ? "Sent to your teacher to check" : r.id === "completed" ? "Well done!" : "Saved"));
-  const options = [["not_started", "Not started"], ["in_progress", "In progress"], ["completed", requiresReview ? "I'm done — ask teacher" : "Completed"]];
+    { toast.success("Saved"); router.refresh(); });
+  const complete = () => run(setActivityStatus, { assignment_id: assignmentId, activity_id: activityId, status: "completed" }, undefined, (r) => {
+    toast.success(r.id === "awaiting_review" ? "Sent to your teacher to check" : "Well done!");
+    router.refresh();
+  });
+  const options = [["not_started", "Not started"], ["in_progress", "In progress"]];
   return (
-    <div className="space-y-1.5">
+    <div className="flex flex-wrap items-center gap-2">
       <div role="group" aria-label="Activity status" className="inline-flex flex-wrap gap-1 rounded-xl bg-slate-100 p-1">
         {options.map(([key, label]) => {
-          const on = status === key || (key === "completed" && status === "awaiting_review");
-          return (
-            <button key={key} type="button" disabled={pending} aria-pressed={on} onClick={() => !on && set(key)}
-              className={cn("flex cursor-pointer items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition disabled:opacity-50", on ? key === "completed" ? "bg-teal text-white shadow-soft" : "bg-white text-ink shadow-soft" : "text-muted hover:text-ink")}>
-              {on && key === "completed" && <Check className="size-4" />}{key === "completed" && status === "awaiting_review" ? "Waiting for teacher" : label}
-            </button>);
+          const on = status === key;
+          return <button key={key} type="button" disabled={pending} aria-pressed={on} onClick={() => !on && set(key)}
+            className={cn("flex cursor-pointer items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition disabled:opacity-50", on ? "bg-white text-ink shadow-soft" : "text-muted hover:text-ink")}>{label}</button>;
         })}
       </div>
+      {status === "completed" ? <span className="text-sm font-medium text-teal">Completed{completedAt && <span className="ml-2 font-normal text-muted">{fmtDateTime(completedAt, timezone)}</span>}</span>
+        : status === "awaiting_review" ? <span className="text-sm font-medium text-muted">Waiting for teacher</span>
+          : <Button size="sm" loading={pending} disabled={!canComplete} onClick={complete} title={!canComplete ? "Submit your work before completing this activity" : undefined}><Check />Complete</Button>}
     </div>
   );
 }
@@ -37,6 +43,23 @@ export function StatusControl({ assignmentId, activityId, status, requiresReview
 export function StartChallenge({ id }: { id: string }) {
   const { pending, run } = useAction();
   return <Button loading={pending} onClick={() => run(startChallenge, { id }, "Challenge started")}>Start challenge</Button>;
+}
+
+export function StartLesson({ assignmentId }: { assignmentId: string }) {
+  const router = useRouter();
+  const { pending, run } = useAction();
+  return <Button loading={pending} onClick={() => run(startLesson, { assignment_id: assignmentId }, "Lesson started", () => router.push(`/student/lessons/${assignmentId}`))}>Start lesson</Button>;
+}
+
+export function CompleteLesson({ assignmentId, taskCount, status, waitingForReview }: { assignmentId: string; taskCount: number; status: string; waitingForReview: boolean }) {
+  const router = useRouter();
+  const { pending, run } = useAction();
+  if (status === "completed") return <Button disabled variant="teal"><CheckCircle2 />Completed</Button>;
+  if (waitingForReview) return <Button disabled variant="outline">Waiting for teacher review</Button>;
+  return <Button loading={pending} onClick={() => run(completeLesson, { assignment_id: assignmentId }, undefined, (result) => {
+    toast.success(result.id === "completed" ? "Lesson completed" : "Work sent to your teacher for review");
+    router.refresh();
+  })}><Check />{taskCount === 0 ? "Mark lesson as complete" : "Complete"}</Button>;
 }
 
 export function SubmitWork({ type, target, assignmentId, folder, label = "Submit your work" }: { type: "activity" | "challenge" | "project"; target: string; assignmentId?: string; folder: string; label?: string }) {

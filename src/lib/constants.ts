@@ -6,8 +6,9 @@ export const ACTION_LABEL: Record<string, string> = { open: "Open Learning Mater
 export const COLORS: Record<string, string> = { indigo: "bg-indigo-100 text-indigo-700", sky: "bg-sky-100 text-sky-700", teal: "bg-teal-100 text-teal-700", violet: "bg-violet-100 text-violet-700", amber: "bg-amber-100 text-amber-800", rose: "bg-rose-100 text-rose-700" };
 export const STATUS: Record<string, { label: string; tone: "grey" | "blue" | "amber" | "teal" | "red" }> = {
   not_started: { label: "Not started", tone: "grey" }, in_progress: { label: "In progress", tone: "blue" },
-  awaiting_review: { label: "Waiting for review", tone: "amber" }, completed: { label: "Completed", tone: "teal" },
+  awaiting_review: { label: "Waiting for review", tone: "amber" }, completed: { label: "Completed", tone: "blue" },
   submitted: { label: "Submitted", tone: "amber" }, approved: { label: "Approved", tone: "teal" },
+  lesson_started: { label: "Lesson started", tone: "blue" }, lesson_completed: { label: "Lesson completed", tone: "teal" },
   needs_revision: { label: "Needs revision", tone: "red" }, resubmit: { label: "Please resubmit", tone: "red" },
   draft: { label: "Draft", tone: "grey" }, published: { label: "Published", tone: "teal" },
 };

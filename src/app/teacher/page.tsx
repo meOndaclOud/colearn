@@ -64,8 +64,8 @@ export default async function Dashboard() {
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
         <Stat label="Active students" value={active.length} icon={Users} href="/teacher/students" />
         <Stat label="Lessons today" value={todays.length} icon={CalendarClock} href="/teacher/planner?view=day" />
-        <Stat label="Activities completed today" value={t.completed} icon={CheckCircle2} tone="bg-teal-soft text-teal" />
-        <Stat label="In progress today" value={t.inProgress} icon={Loader} />
+        <Stat label="Work completed today" value={t.completed} icon={CheckCircle2} tone="bg-teal-soft text-teal" />
+        <Stat label="Work in progress today" value={t.inProgress} icon={Loader} />
         <Stat label="Pending today" value={t.pending} icon={CircleDashed} tone="bg-warn-soft text-warn" />
       </div>
 

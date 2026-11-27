@@ -10,6 +10,20 @@ async function me() {
   return id;
 }
 
+export async function startLesson(input: unknown) {
+  return run("class", z.object({ assignment_id: uuid }), input, async ({ assignment_id }, { db }) => {
+    check(await db.rpc("student_start_lesson", { p_assignment: assignment_id, p_student: await me() }));
+  });
+}
+
+export async function completeLesson(input: unknown) {
+  return run("class", z.object({ assignment_id: uuid }), input, async ({ assignment_id }, { db }) => {
+    const res = await db.rpc("student_complete_lesson", { p_assignment: assignment_id, p_student: await me() });
+    check(res);
+    return res.data as string;
+  });
+}
+
 export async function setActivityStatus(input: unknown) {
   const schema = z.object({ assignment_id: uuid, activity_id: uuid, status: z.enum(["not_started","in_progress","completed"]) });
   return run("class", schema, input, async (d, { db }) => {

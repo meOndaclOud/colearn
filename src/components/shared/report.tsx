@@ -14,21 +14,21 @@ export function Report({ rows, from, to, feedback, extra }: { rows: Progress[]; 
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-        <Stat label="Assigned activities" value={t.total} icon={ListTodo} />
+        <Stat label="Assigned work" value={t.total} icon={ListTodo} />
         <Stat label="Completed" value={t.completed} icon={CheckCircle2} tone="bg-teal-soft text-teal" />
         <Stat label="In progress" value={t.inProgress} icon={Loader} />
         <Stat label="Pending" value={t.pending} icon={CircleDashed} tone="bg-warn-soft text-warn" />
         <Stat label="Completion rate" value={`${pct(t.completed, t.total)}%`} icon={Percent} tone="bg-teal-soft text-teal" />
       </div>
       {extra && <p className="text-sm text-muted">Challenges completed: <b className="text-ink">{extra.challengesDone} of {extra.challengesTotal}</b> · Submissions in this period: <b className="text-ink">{extra.submissions}</b></p>}
-      <Card><CardTitle className="mb-3">Activities by day</CardTitle><ActivityChart data={byDay(rows, from, to)} /></Card>
+      <Card><CardTitle className="mb-3">Work progress by day</CardTitle><ActivityChart data={byDay(rows, from, to)} /></Card>
       {rows.length > 0 && (
         <Card className="overflow-x-auto p-0">
           <table className="w-full min-w-[480px] text-sm">
-            <thead className="text-left text-xs text-muted"><tr><th className="p-3">Date</th><th className="p-3">Lesson</th><th className="p-3">Activities</th><th className="w-40 p-3">Progress</th></tr></thead>
+            <thead className="text-left text-xs text-muted"><tr><th className="p-3">Date</th><th className="p-3">Lesson</th><th className="p-3">Work items</th><th className="w-40 p-3">Progress</th></tr></thead>
             <tbody>{rows.map((r) => (
               <tr key={r.assignment_id} className="border-t border-line"><td className="whitespace-nowrap p-3">{fmtDate(r.scheduled_date, "EEE d MMM")}</td><td className="p-3 font-medium">{r.title}</td>
-                <td className="p-3">{r.completed}/{r.total}</td><td className="p-3"><ProgressBar value={pct(r.completed, r.total)} label={r.title} /></td></tr>
+                <td className="p-3">{r.activity_total ? `${r.completed}/${r.total} activities` : r.lesson_status === "completed" ? "Lesson completed" : "Instruction-only lesson"}</td><td className="p-3"><ProgressBar value={pct(r.completed, r.total)} label={r.title} /></td></tr>
             ))}</tbody>
           </table>
         </Card>

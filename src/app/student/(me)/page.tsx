@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Avatar, Badge, Empty, ProgressBar, StatusBadge } from "@/components/shared/bits";
 import type { Feedback, Progress } from "@/lib/types";
+import { StartLesson } from "@/components/student/controls";
 
 export const metadata = { title: "Today" };
 
@@ -77,9 +78,9 @@ export default async function Today() {
                 <h3 className="text-lg font-semibold">{r.title}</h3>
                 {l?.introduction && <p className="line-clamp-2 text-sm text-muted">{plain(l.introduction)}</p>}
                 {l?.objectives && <p className="line-clamp-2 text-sm"><b>Goal:</b> {l.objectives}</p>}
-                <p className="flex gap-4 text-xs text-muted"><span className="flex items-center gap-1"><Clock className="size-3.5" />{r.duration_minutes} min</span><span className="flex items-center gap-1"><ListChecks className="size-3.5" />{r.total} activities</span></p>
+                <p className="flex gap-4 text-xs text-muted"><span className="flex items-center gap-1"><Clock className="size-3.5" />{r.duration_minutes} min</span><span className="flex items-center gap-1"><ListChecks className="size-3.5" />{r.activity_total ? `${r.activity_total} activities` : "Instructions only"}</span></p>
                 <ProgressBar value={pct(r.completed, r.total)} />
-                <Button asChild className="mt-auto"><Link href={`/student/lessons/${r.assignment_id}`}>{state === "not_started" ? "Start lesson" : state === "completed" ? "Review lesson" : "Continue"}<ArrowRight /></Link></Button>
+                {state === "not_started" ? <StartLesson assignmentId={r.assignment_id} /> : <Button asChild className="mt-auto"><Link href={`/student/lessons/${r.assignment_id}`}>{state === "completed" ? "Review lesson" : "Continue"}<ArrowRight /></Link></Button>}
               </Card>);
           })}
         </div>

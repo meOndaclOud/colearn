@@ -132,7 +132,7 @@ export default async function Planner({ searchParams }: { searchParams: Promise<
           {!rows.length && <Empty icon={CalendarDays} title="No lessons on this day" />}
           {rows.map((r) => (
             <Card key={r.assignment_id} className="flex flex-wrap items-center gap-3 p-4">
-              <Link href={`/teacher/planner/lessons/${r.lesson_id}`} className="min-w-48 flex-1 hover:text-brand"><p className="font-medium">{r.title}</p><p className="text-xs text-muted">{name(r.student_id)} · {r.completed}/{r.total} activities done</p></Link>
+              <Link href={`/teacher/planner/lessons/${r.lesson_id}`} className="min-w-48 flex-1 hover:text-brand"><p className="font-medium">{r.title}</p><p className="text-xs text-muted">{name(r.student_id)} · {r.activity_total ? `${r.completed}/${r.total} activities done` : r.lesson_status === "completed" ? "Instruction-only lesson completed" : "Instruction-only lesson"}</p></Link>
               <StatusBadge status={r.publish_status} />
               <ActionButton variant="outline" size="sm" action={updateAssignment} input={{ id: r.assignment_id, status: r.publish_status === "draft" ? "published" : "draft" }} success="Updated">{r.publish_status === "draft" ? "Publish" : "Unpublish"}</ActionButton>
               <Button asChild variant="outline" size="sm"><Link href={`/teacher/students/${r.student_id}/lessons/${r.assignment_id}`}>Progress</Link></Button>

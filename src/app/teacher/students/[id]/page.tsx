@@ -85,7 +85,7 @@ export default async function StudentProfile({ params, searchParams }: { params:
           {progress.map((r) => (
             <Link key={r.assignment_id} href={`/teacher/students/${id}/lessons/${r.assignment_id}`} className="block">
               <Card className="flex flex-wrap items-center gap-3 p-4 transition hover:shadow-lift">
-                <div className="min-w-48 flex-1"><p className="font-medium">{r.title}</p><p className="text-xs text-muted">{fmtDate(r.scheduled_date, "EEEE d MMM yyyy")} · {r.completed}/{r.total} activities</p></div>
+                <div className="min-w-48 flex-1"><p className="font-medium">{r.title}</p><p className="text-xs text-muted">{fmtDate(r.scheduled_date, "EEEE d MMM yyyy")} · {r.activity_total ? `${r.completed}/${r.total} activities` : r.lesson_status === "completed" ? "Instruction-only lesson completed" : "Instruction-only lesson"}</p></div>
                 <div className="w-32"><ProgressBar value={pct(r.completed, r.total)} /></div>
                 <StatusBadge status={r.publish_status === "draft" ? "draft" : lessonState(r)} />
               </Card>

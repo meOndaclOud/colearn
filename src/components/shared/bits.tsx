@@ -21,7 +21,7 @@ export function Avatar({ name, color = "indigo", src, size = "md" }: { name: str
 export function ProgressBar({ value, label }: { value: number; label?: string }) {
   return (
     <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100" role="progressbar" aria-valuenow={value} aria-valuemin={0} aria-valuemax={100} aria-label={label ?? "Progress"}>
-      <div className={cn("h-full origin-left rounded-full transition-[width] duration-500 ease-out", value === 100 ? "bg-teal" : "bg-brand")} style={{ width: `${value}%` }} />
+      <div className={cn("h-full origin-left rounded-full bg-[#365CEB] transition-[width] duration-500 ease-out")} style={{ width: `${value}%` }} />
     </div>
   );
 }
